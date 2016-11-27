@@ -1,0 +1,11 @@
+{
+  "rules": {
+    "eqeqeq": 2,
+    "complexity": [2, 15],
+    "indent": [2, 2],
+    "curly": 2
+  },
+  "env": {
+    "mocha": true
+  }
+}
