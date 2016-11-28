@@ -3,6 +3,7 @@
 // it's tweets are in the form the server originally
 // creates them in.
 var currentUser = null;
+var currentlyLoggedIn = null;
 
 /**
  * Calls to the server for performing an action on a 
@@ -46,7 +47,7 @@ function serverPost(callback, content, action) {
     action = "";
   else
     action = "/" + action;
-  xhttp.open("post", "/users/" + currentUser.username + action);
+  xhttp.open("post", "/users/" + currentlyLoggedIn.username + action);
   xhttp.send(content);
 }
 
@@ -70,7 +71,7 @@ function createTweetElement(data) {
   var fave = document.createElement('div');
   var faveLink = document.createElement('a');
   faveLink.className = "favorite-link";
-  faveLink.textContent = "Favorite"
+  faveLink.textContent = "Favorite";
   //faveLink.onclick = function() {}
   var faveCount = document.createElement('span');
   faveCount.className = "favorite-count";
@@ -90,7 +91,7 @@ function createTweetElement(data) {
         tweetList.insertBefore(element, tweetList.childNodes[0]);
       }
     }, data.tweetObject.id, "retweet");
-  }
+  };
 
   var retweetInd = document.createElement('span');
   retweetInd.className = "retweet-indicator";
@@ -144,8 +145,8 @@ function isLink(element) {
 // All 'user' objects will be the text versions of said objects.
 window.addEventListener('load', function() {
 
-  var switchUserInput = document.getElementById('switch-user-input');
-  var switchUserButton = document.getElementById('switch-user-button');
+  var logInInput = document.getElementById('switch-user-input');
+  var logInButton = document.getElementById('switch-user-button');
   var tweetInput = document.getElementById('tweet-input');
   var tweetButton = document.getElementById('tweet-button');
   var followInput = document.getElementById('follow-input');
@@ -157,14 +158,12 @@ window.addEventListener('load', function() {
 
   function switchUserLink(e) {
     if(isLink(e.target)) {
-      //switchUser(e.target.textContent);
       serverCall(switchUser, e.target.textContent);
     }
   }
 
   function switchUserForm(e) {
-    //switchUser(switchUserInput.value);
-    serverCall(switchUser, switchUserInput.value);
+    serverPost(switchUser, logInInput.value, "login");
     clearInput(switchUserInput);
   }
 
@@ -172,25 +171,24 @@ window.addEventListener('load', function() {
 
     currentUser = user;
 
-    currentUserHeader.textContent = currentUser.username;
+    currentUserHeader.textContent = currentlyLoggedIn.username; // not current user!
 
     replaceAllChildren(
       tweetList,
       createTweetElements(currentUser.timeline));
 
+    var friendsList = [];
+    for (var friend in currentlyLoggedIn.friends) {
+      friendsList.unshift({ username: friend });
+    }
     replaceAllChildren(
-      followerList,
-      createUserLinks(currentUser.followers));
-
-    replaceAllChildren(
-      followingList,
-      createUserLinks(currentUser.following));
+      friendsList,
+      createUserLinks(friendsList)); // .following?
   }
 
   function tweet(tweetObject) {
     //var content = tweetInput.value;
-    //var tweetObject = currentUser.tweet(content); // Send info up
-  
+
     if(tweetObject) {
       var element = createTweetElement(tweetObject);
       tweetList.insertBefore(element, tweetList.childNodes[0]);
@@ -201,18 +199,12 @@ window.addEventListener('load', function() {
   function callTweet() {
     serverPost(tweet, tweetInput.value, "tweet");
   }
-  //function callRetweet(tweetID) {
-    //serverPost(tweet, tweetID, "retweet");
-  //}
 
   function follow(user) {
-    //var user = getUser(followInput.value);
-    //if(currentUser.follow(user)) {
     var link = createUserLink(user);
     followingList.appendChild(link);
 
     clearInput(followInput);
-    //}
   }
   function callFollow(username) {
     serverPost(follow, followInput.value, "follow");
@@ -220,7 +212,7 @@ window.addEventListener('load', function() {
 
   followingList.addEventListener('click', switchUserLink);
   followerList.addEventListener('click', switchUserLink);
-  switchUserButton.addEventListener('click', switchUserForm);
+  logInButton.addEventListener('click', switchUserForm);
   tweetButton.addEventListener('click', callTweet);
   followButton.addEventListener('click', callFollow);
 
